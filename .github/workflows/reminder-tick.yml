@@ -1,0 +1,17 @@
+# Nhịp tim nhắc lịch "Việc của tôi" (meHappy Command Center) — ping mỗi 5 phút.
+# Repo này KHÔNG chứa code/secret; chỉ gọi endpoint tick với CRON_SECRET (lưu ở Actions Secrets).
+name: reminder-tick
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping endpoint nhắc lịch
+        run: |
+          curl -fsS -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://command.mehappy.click/api/my-tasks/reminders/tick" \
+            -w "\nHTTP %{http_code}\n"
