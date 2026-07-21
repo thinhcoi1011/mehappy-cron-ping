@@ -1,0 +1,18 @@
+# Nhắc gấp Partner Hub — bắn thêm 2 mốc/ngày (13h + 17h VN) ngoài cron Vercel 8h sáng.
+# Repo này KHÔNG chứa code/secret app; chỉ gọi endpoint với PARTNER_REMINDERS_KEY (Actions Secrets).
+name: partner-hub-reminders
+on:
+  schedule:
+    - cron: "0 6 * * *"    # 13:00 VN — nhắc gấp
+    - cron: "0 10 * * *"   # 17:00 VN — nhắc gấp
+  workflow_dispatch: {}
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping nhắc gấp Partner Hub
+        run: |
+          curl -fsS -X GET \
+            -H "x-worker-key: ${{ secrets.PARTNER_REMINDERS_KEY }}" \
+            "https://partner-hub.mehappy.click/api/reminders/cron?mode=urgent" \
+            -w "\nHTTP %{http_code}\n"
