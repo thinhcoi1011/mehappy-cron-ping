@@ -1,0 +1,18 @@
+# Rà hội thoại Pancake của đối tác — 1 lần/tuần, sáng thứ Hai 8h VN.
+# Báo Telegram: đã khớp bao nhiêu đối tác, đối tác nào CHƯA khớp (thường do SĐT lưu sai/thiếu).
+# Repo này KHÔNG chứa code/secret app; chỉ gọi endpoint với PARTNER_REMINDERS_KEY (Actions Secrets).
+name: partner-hub-conv-audit
+on:
+  schedule:
+    - cron: "30 1 * * 1"   # 08:30 VN thứ Hai (sau bản tin nhắc việc 8h, khỏi dội vào nhau)
+  workflow_dispatch: {}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rà hội thoại đối tác + báo Telegram
+        run: |
+          curl -fsS --max-time 120 -X GET \
+            -H "x-worker-key: ${{ secrets.PARTNER_REMINDERS_KEY }}" \
+            "https://partner-hub.mehappy.click/api/conversations/audit/cron" \
+            -w "\nHTTP %{http_code}\n"
