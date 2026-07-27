@@ -1,0 +1,41 @@
+# Thợ quét SĂN LEAD (Google Maps qua Apify) — Partner Hub.
+#
+# 🔴 BÀI HỌC 27/07: quét là chuỗi nhiều bước (khởi động Apify → chờ chạy xong → lấy dữ liệu →
+# nạp vào khu chờ duyệt). Mỗi lượt gọi chỉ đẩy job tiến MỘT bước.
+# Trước đây chỉ có Vercel cron 1 lần/ngày, LẠI còn bị khoá bởi cờ "lịch tự quét" đang tắt
+# ⇒ CEO bấm quét tay cả tiếng vẫn 0 kết quả, job nằm im ở trạng thái "chờ xử lý".
+# Nay: gọi đều trong giờ làm để đợt quét đi tới nơi. Endpoint chỉ ĐỌC + nạp lead vào khu
+# chờ duyệt, KHÔNG gửi tin cho ai.
+#
+# Repo này KHÔNG chứa code/secret app; chỉ gọi endpoint với PARTNER_REMINDERS_KEY (Actions Secrets).
+name: partner-hub-discovery
+on:
+  schedule:
+    # Sáng 8h–12h VN = 1:00–5:00 UTC
+    - cron: "12 1 * * 1-6"
+    - cron: "42 1 * * 1-6"
+    - cron: "12 2 * * 1-6"
+    - cron: "42 2 * * 1-6"
+    - cron: "12 3 * * 1-6"
+    - cron: "42 3 * * 1-6"
+    - cron: "12 4 * * 1-6"
+    - cron: "42 4 * * 1-6"
+    # Chiều 13h30–18h VN = 6:30–11:00 UTC
+    - cron: "12 7 * * 1-6"
+    - cron: "42 7 * * 1-6"
+    - cron: "12 8 * * 1-6"
+    - cron: "42 8 * * 1-6"
+    - cron: "12 9 * * 1-6"
+    - cron: "42 9 * * 1-6"
+    - cron: "12 10 * * 1-6"
+  workflow_dispatch: {}
+jobs:
+  drain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Đẩy hàng đợi săn lead đi tiếp
+        run: |
+          curl -fsS --max-time 120 -X GET \
+            -H "x-worker-key: ${{ secrets.PARTNER_REMINDERS_KEY }}" \
+            "https://partner-hub.mehappy.click/api/discovery/tick" \
+            -w "\nHTTP %{http_code}\n"
