@@ -1,13 +1,31 @@
 # Nhịp chiến dịch nối lại đại lý — Partner Hub.
-# Gọi 5 phút/lần trong GIỜ HÀNH CHÍNH giờ VN; app tự kiểm giờ/trần ngày/nhịp giãn/phanh an toàn
-# nên gọi thừa cũng vô hại (app trả "ngoài giờ" rồi thôi).
+#
+# 🔴 BÀI HỌC 27/07: GitHub Actions KHÔNG chạy đúng lịch dày. Workflow `reminder-tick` khai
+# `*/5 * * * *` nhưng ĐO THẬT các lần chạy cách nhau 52–219 phút — GitHub bóp lịch tần suất cao.
+# Ngược lại, lịch THƯA ở mốc giờ CỐ ĐỊNH (như partner-hub-reminders) chạy đúng hẹn.
+# ⇒ Dùng ~12 mốc cố định/ngày thay vì */5. Mỗi lần app gửi một CỤM tối đa 6 tin
+#   (giãn 8–20 giây trong cụm) ⇒ sức chứa ~72 tin/ngày, thừa cho trần 30.
+# Phút lẻ (07/37) để né lúc GitHub đông nhất là đầu giờ tròn.
+#
 # Repo này KHÔNG chứa code/secret app; chỉ gọi endpoint với PARTNER_REMINDERS_KEY (Actions Secrets).
 name: partner-hub-campaign
 on:
   schedule:
-    # 9h–11h30 VN = 2:00–4:30 UTC · 14h–17h30 VN = 7:00–10:30 UTC
-    - cron: "*/5 2-4,7-10 * * 1-6"
-    # 17h35 VN = 10:35 UTC — bản tin chiều
+    # Sáng 9h–11h30 VN = 2:00–4:30 UTC
+    - cron: "7 2 * * 1-6"
+    - cron: "37 2 * * 1-6"
+    - cron: "7 3 * * 1-6"
+    - cron: "37 3 * * 1-6"
+    - cron: "7 4 * * 1-6"
+    # Chiều 14h–17h30 VN = 7:00–10:30 UTC
+    - cron: "7 7 * * 1-6"
+    - cron: "37 7 * * 1-6"
+    - cron: "7 8 * * 1-6"
+    - cron: "37 8 * * 1-6"
+    - cron: "7 9 * * 1-6"
+    - cron: "37 9 * * 1-6"
+    - cron: "7 10 * * 1-6"
+    # 17h35 VN = 10:35 UTC — bản tin tổng kết chiều
     - cron: "35 10 * * 1-6"
   workflow_dispatch: {}
 jobs:
@@ -16,9 +34,9 @@ jobs:
     steps:
       - name: Nhịp gửi (hoặc bản tin chiều)
         run: |
-          # Nhánh 17h35 → gửi bản tin tổng kết; còn lại → 1 nhịp gửi tin.
+          # Nhánh 17h35 → gửi bản tin tổng kết; còn lại → 1 cụm tin.
           if [ "${{ github.event.schedule }}" = "35 10 * * 1-6" ]; then Q="?report=1"; else Q=""; fi
-          curl -fsS --max-time 90 -X GET \
+          curl -fsS --max-time 120 -X GET \
             -H "x-worker-key: ${{ secrets.PARTNER_REMINDERS_KEY }}" \
             "https://partner-hub.mehappy.click/api/campaign/tick$Q" \
             -w "\nHTTP %{http_code}\n"
