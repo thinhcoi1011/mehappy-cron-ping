@@ -1,0 +1,24 @@
+# Nhịp chiến dịch nối lại đại lý — Partner Hub.
+# Gọi 5 phút/lần trong GIỜ HÀNH CHÍNH giờ VN; app tự kiểm giờ/trần ngày/nhịp giãn/phanh an toàn
+# nên gọi thừa cũng vô hại (app trả "ngoài giờ" rồi thôi).
+# Repo này KHÔNG chứa code/secret app; chỉ gọi endpoint với PARTNER_REMINDERS_KEY (Actions Secrets).
+name: partner-hub-campaign
+on:
+  schedule:
+    # 9h–11h30 VN = 2:00–4:30 UTC · 14h–17h30 VN = 7:00–10:30 UTC
+    - cron: "*/5 2-4,7-10 * * 1-6"
+    # 17h35 VN = 10:35 UTC — bản tin chiều
+    - cron: "35 10 * * 1-6"
+  workflow_dispatch: {}
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Nhịp gửi (hoặc bản tin chiều)
+        run: |
+          # Nhánh 17h35 → gửi bản tin tổng kết; còn lại → 1 nhịp gửi tin.
+          if [ "${{ github.event.schedule }}" = "35 10 * * 1-6" ]; then Q="?report=1"; else Q=""; fi
+          curl -fsS --max-time 90 -X GET \
+            -H "x-worker-key: ${{ secrets.PARTNER_REMINDERS_KEY }}" \
+            "https://partner-hub.mehappy.click/api/campaign/tick$Q" \
+            -w "\nHTTP %{http_code}\n"
