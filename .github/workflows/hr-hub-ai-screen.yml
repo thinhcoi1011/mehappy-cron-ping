@@ -1,0 +1,23 @@
+# HR Hub — AI chấm CV cho hồ sơ mới nộp.
+#
+# Vì sao cần repo này: gói Vercel của HR Hub là Hobby → cron của Vercel chỉ chạy
+# 1 lần/ngày, mà CV nộp vào thì HR muốn có điểm ngay. Vercel cron 07h45 vẫn giữ
+# làm lưới cuối; đây là nhịp chính.
+#
+# Repo này KHÔNG chứa code/khóa của app — chỉ gọi endpoint, khóa nằm ở Actions Secrets.
+# Endpoint tự kiểm CRON_SECRET và tự bỏ qua hồ sơ đã chấm, nên gọi thừa vô hại.
+name: hr-hub-ai-screen
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # mỗi 5 phút (GitHub có thể trễ vài phút lúc cao điểm)
+  workflow_dispatch: {}
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chấm AI cho CV chưa chấm
+        run: |
+          curl -fsS -X GET \
+            -H "Authorization: Bearer ${{ secrets.HR_HUB_CRON_SECRET }}" \
+            "https://hr-hub.mehappy.click/api/cron/auto-ai-screen" \
+            -w "\nHTTP %{http_code}\n"
