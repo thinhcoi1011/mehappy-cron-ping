@@ -1,0 +1,18 @@
+# HR Hub — báo cáo sáng + nhắc lịch phỏng vấn, BẤM TAY.
+#
+# Lịch thật do Vercel cron lo (07h30 VN). Workflow này KHÔNG có lịch — chỉ để
+# bấm chạy khi cần gửi lại hoặc kiểm chứng, vì mỗi lần chạy là GỬI TIN THẬT
+# vào nhóm Telegram nội bộ.
+name: hr-hub-briefing-manual
+on:
+  workflow_dispatch: {}
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gửi báo cáo sáng HR Hub
+        run: |
+          curl -fsS -X GET \
+            -H "Authorization: Bearer ${{ secrets.HR_HUB_CRON_SECRET }}" \
+            "https://hr-hub.mehappy.click/api/cron/interview-reminder" \
+            -w "\nHTTP %{http_code}\n"
